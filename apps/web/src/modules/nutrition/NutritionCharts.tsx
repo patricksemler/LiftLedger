@@ -35,8 +35,12 @@ type WindowDays = 7 | 30;
  * stacked charts — daily calories vs target, and protein trend vs target. */
 export function NutritionCharts({ points30, calorieTarget, proteinTarget }: NutritionChartsProps) {
   const [windowDays, setWindowDays] = useState<WindowDays>(7);
+  // Unlogged days are gaps, not zeros — nothing logged isn't a fast.
   const points = useMemo(
-    () => (windowDays === 7 ? points30.slice(-7) : points30),
+    () =>
+      (windowDays === 7 ? points30.slice(-7) : points30).map((p) =>
+        p.mealCount === 0 ? { ...p, calories: null, protein_g: null } : p,
+      ),
     [points30, windowDays],
   );
 
@@ -90,7 +94,10 @@ function ChartBlock({
   unit,
 }: {
   title: string;
-  points: DailyPoint[];
+  points: (Omit<DailyPoint, "calories" | "protein_g"> & {
+    calories: number | null;
+    protein_g: number | null;
+  })[];
   dataKey: "calories" | "protein_g";
   target: number | null;
   unit: string;
@@ -137,6 +144,7 @@ function ChartBlock({
             <Line
               type="monotone"
               dataKey={dataKey}
+              connectNulls={false}
               stroke="var(--color-accent)"
               strokeWidth={1.5}
               dot={false}

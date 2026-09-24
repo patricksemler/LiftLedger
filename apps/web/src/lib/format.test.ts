@@ -24,3 +24,9 @@ describe("formatAxisDate", () => {
     expect(formatAxisDate(new Date(2026, 6, 13).getTime())).toBe("Jul 13");
   });
 });
+
+describe("relativeTime (future)", () => {
+  it("describes future times instead of 'just now'", () => {
+    expect(relativeTime(new Date(Date.now() + 10 * 60_000).toISOString())).toBe("in 10 min");
+  });
+});

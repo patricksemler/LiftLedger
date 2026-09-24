@@ -38,7 +38,7 @@ function VolumeTrend({ points }: { points: WeeklyVolumePoint[] }) {
         <p className="text-[11px] text-ink-faint">Weekly volume</p>
         <p className="font-mono text-[10px] text-ink-faint">last {points.length} wks</p>
       </div>
-      <div className="flex w-fit flex-col">
+      <div className="flex w-full max-w-[520px] flex-col">
         <div className="flex h-14 items-end gap-[3px]">
           {points.map((point, i) => (
             <div
@@ -46,7 +46,7 @@ function VolumeTrend({ points }: { points: WeeklyVolumePoint[] }) {
               title={`Week of ${chartWeekLabel(point.week_start)} · ${
                 point.total > 0 ? formatVolume(point.total) : "no volume"
               }`}
-              className={`min-h-[2px] w-10 rounded-t-[3px] ${
+              className={`min-h-[2px] max-w-10 flex-1 rounded-t-[3px] ${
                 i === points.length - 1 ? "bg-accent" : "bg-accent-dim"
               }`}
               style={{ height: `${Math.round((point.total / max) * 100)}%` }}

@@ -7,6 +7,7 @@
  * or last-run status line. */
 export function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
+  if (diffMs < -30_000) return `in ${untilText(-diffMs)}`;
   const minutes = Math.round(diffMs / 60_000);
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
@@ -14,6 +15,13 @@ export function relativeTime(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
   return `${days}d ago`;
+}
+
+function untilText(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 60) return `${Math.max(1, minutes)} min`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `${hours}h` : `${Math.round(hours / 24)}d`;
 }
 
 /** Short "Jun 9" style chart-axis tick for a millisecond timestamp. */

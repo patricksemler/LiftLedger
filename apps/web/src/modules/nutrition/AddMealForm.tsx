@@ -194,13 +194,14 @@ export function AddMealForm() {
         )}
       </div>
 
-      <div className="grid grid-cols-[1fr_repeat(4,4.5rem)_auto] items-center gap-1.5">
+      {/* Phones: name on its own row, then the four numbers + add button. */}
+      <div className="grid grid-cols-[repeat(4,minmax(0,1fr))_auto] items-center gap-1.5 sm:grid-cols-[1fr_repeat(4,4.5rem)_auto]">
         <input
           value={custom.name}
           onChange={(e) => setCustom({ ...custom, name: e.target.value })}
           placeholder="Or a custom item"
           aria-label="Custom item name"
-          className={inputClass}
+          className={`${inputClass} col-span-5 sm:col-span-1`}
         />
         {(["calories", "protein_g", "carbs_g", "fat_g"] as const).map((k) => (
           <input

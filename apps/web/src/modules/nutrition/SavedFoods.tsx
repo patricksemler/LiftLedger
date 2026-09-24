@@ -54,8 +54,10 @@ export function SavedFoods({ foods }: { foods: SavedFoodRow[] }) {
                 </p>
                 <p className="font-mono text-[11px] tabular-nums text-ink-faint">
                   {food.serving_desc}
-                  {food.serving_grams ? ` (${food.serving_grams} g)` : ""} · {food.calories} kcal ·{" "}
-                  {food.protein_g}P / {food.carbs_g}C / {food.fat_g}F
+                  {food.serving_grams && !/\d\s*g\b/.test(food.serving_desc)
+                    ? ` (${food.serving_grams} g)`
+                    : ""}{" "}
+                  · {food.calories} kcal · {food.protein_g}P / {food.carbs_g}C / {food.fat_g}F
                 </p>
               </div>
               <button
