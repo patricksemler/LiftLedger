@@ -16,7 +16,8 @@
     "build": "pnpm -r --if-present run build",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > packages/shared/src/database.types.ts"
+    "db:types": "supabase gen types typescript --local > packages/shared/src/database.types.ts",
+    "db:test": "docker exec -i supabase_db_liftledger psql -U postgres -v ON_ERROR_STOP=1 -q < supabase/tests/rls_and_meals.sql"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
