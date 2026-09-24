@@ -13,6 +13,7 @@ import { db } from "../../lib/db";
 import { logAiCall } from "../ai-log";
 import { type Amount, amountOf, isServingUnit, macrosFor } from "./amounts";
 import type { ParsedItem } from "./schema";
+import { itemWarnings } from "./validate";
 
 export type MatchSource = "user" | "saved_food" | "recall" | "usda" | "off" | "llm";
 
@@ -285,13 +286,14 @@ export async function resolveItems(
   });
 }
 
-/** A database match whose calories are wildly off the model's own estimate
- * is almost always the wrong product (powdered vs liquid, a 100 g default
- * applied to a whole pizza...). */
+/** A database match far ABOVE the model's own estimate is almost always the
+ * wrong product in a concentrated form (powdered or condensed milk, dry rice
+ * or raw beans for cooked). Far below is more often the model overestimating,
+ * so the database wins unless the gap is extreme. */
 export function implausible(dbKcal: number, estimateKcal: number | null): boolean {
   if (estimateKcal == null || estimateKcal < 40) return false;
   const ratio = dbKcal / estimateKcal;
-  return ratio > 2.5 || ratio < 0.4;
+  return ratio > 2.5 || ratio < 0.25;
 }
 
 function estimated(item: ParsedItem, amount: Amount, label: string): ResolvedItem {

@@ -1,0 +1,22 @@
+[
+  { "text": "2 large eggs scrambled", "kcal": [130, 220], "protein": [10, 16] },
+  { "text": "1 cup cooked white rice", "kcal": [180, 260], "protein": [3, 6] },
+  { "text": "6 oz grilled chicken breast", "kcal": [250, 330], "protein": [45, 58] },
+  { "text": "a medium banana", "kcal": [90, 125], "protein": [1, 2] },
+  { "text": "1 cup of black beans", "kcal": [200, 250], "protein": [13, 17] },
+  {
+    "text": "2 slices of whole wheat toast with 1 tbsp peanut butter",
+    "kcal": [230, 330],
+    "protein": [9, 16]
+  },
+  { "text": "a scoop of whey protein with water", "kcal": [100, 140], "protein": [20, 27] },
+  { "text": "big mac and a medium fries", "kcal": [850, 1000], "protein": [25, 35] },
+  { "text": "1 cup black beans 220 cals 15g protein", "kcal": [220, 220], "protein": [15, 15] },
+  { "text": "greek yogurt 0% 170g", "kcal": [85, 110], "protein": [15, 19] },
+  { "text": "a tablespoon of olive oil", "kcal": [110, 130], "protein": [0, 0.5] },
+  {
+    "text": "chipotle chicken burrito bowl with rice, black beans, cheese and salsa",
+    "kcal": [650, 900],
+    "protein": [40, 60]
+  }
+]

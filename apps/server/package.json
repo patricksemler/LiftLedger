@@ -8,7 +8,9 @@
     "start": "tsx --env-file-if-exists=.env.local src/index.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "simulate": "tsx --env-file-if-exists=.env.local scripts/simulate.ts"
+    "simulate": "tsx --env-file-if-exists=.env.local scripts/simulate.ts",
+    "tools": "tsx --env-file-if-exists=.env.local scripts/tools.ts",
+    "eval:food": "tsx --env-file-if-exists=.env.local evals/food.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.62",

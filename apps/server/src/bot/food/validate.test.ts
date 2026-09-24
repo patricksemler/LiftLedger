@@ -37,5 +37,7 @@ describe("implausible", () => {
     expect(implausible(540, 122)).toBe(true);
     expect(implausible(130, 122)).toBe(false);
     expect(implausible(900, 20)).toBe(false); // estimate too small to judge
+    // 6 oz chicken: USDA 280 kcal vs an inflated 600 kcal guess — trust USDA.
+    expect(implausible(280, 600)).toBe(false);
   });
 });
