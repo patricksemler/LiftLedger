@@ -4,8 +4,8 @@
 import { z } from "zod";
 
 const schema = z.object({
-  PORT: z.coerce.number().default(8787),
-  PUBLIC_BASE_URL: z.string().url().default("http://localhost:8787"),
+  PORT: z.coerce.number().default(8790),
+  PUBLIC_BASE_URL: z.string().url().default("http://localhost:8790"),
   WEB_ORIGIN: z.string().default("http://localhost:5180"),
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),

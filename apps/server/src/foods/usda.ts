@@ -47,22 +47,25 @@ function titleCase(s: string): string {
 
 export function fdcToCandidate(food: FdcFood): FoodCandidate {
   const n = food.foodNutrients ?? [];
-  const per100g: Macros = {
-    calories: pick(n, NUTRIENT.energyKcal),
-    protein_g: pick(n, NUTRIENT.protein),
-    carbs_g: pick(n, NUTRIENT.carbs),
-    fat_g: pick(n, NUTRIENT.fat),
-    fiber_g: pick(n, NUTRIENT.fiber),
-  };
+  const protein_g = pick(n, NUTRIENT.protein);
+  const carbs_g = pick(n, NUTRIENT.carbs);
+  const fat_g = pick(n, NUTRIENT.fat);
+  // Some Foundation foods omit energy in search results; derive it (Atwater).
+  const calories =
+    pick(n, NUTRIENT.energyKcal) || Math.round((protein_g * 4 + carbs_g * 4 + fat_g * 9) * 10) / 10;
+  const per100g: Macros = { calories, protein_g, carbs_g, fat_g, fiber_g: pick(n, NUTRIENT.fiber) };
   const unit = food.servingSizeUnit?.toLowerCase();
   const servingGrams =
     food.servingSize && (unit === "g" || unit === "grm" || unit === "ml" || unit === "mlt")
       ? food.servingSize
       : null;
   const per = servingGrams ? scaleMacros(per100g, servingGrams / 100) : per100g;
+  const household = food.householdServingFullText?.trim();
   const servingDesc = servingGrams
-    ? food.householdServingFullText
-      ? `${food.householdServingFullText} (${servingGrams} g)`
+    ? household
+      ? /\d\s*g\b|gram/i.test(household)
+        ? household
+        : `${household} (${servingGrams} g)`
       : `${servingGrams} g`
     : "100 g";
 
@@ -80,15 +83,18 @@ export function fdcToCandidate(food: FdcFood): FoodCandidate {
 
 export async function searchUsda(
   query: string,
-  opts: { branded?: boolean; limit?: number; signal?: AbortSignal } = {},
+  opts: { branded?: boolean; survey?: boolean; limit?: number; signal?: AbortSignal } = {},
 ): Promise<FoodCandidate[]> {
   const url = new URL("https://api.nal.usda.gov/fdc/v1/foods/search");
   url.searchParams.set("api_key", env.USDA_FDC_API_KEY);
   url.searchParams.set("query", query);
   url.searchParams.set("pageSize", String(opts.limit ?? 8));
+  // Generic foods: every word must match, so "black beans" doesn't lead
+  // with "black bean salad" style partial matches.
+  if (!opts.branded) url.searchParams.set("requireAllWords", "true");
   url.searchParams.set(
     "dataType",
-    opts.branded ? "Branded" : "Foundation,SR Legacy,Survey (FNDDS)",
+    opts.branded ? "Branded" : opts.survey ? "Survey (FNDDS)" : "Foundation,SR Legacy",
   );
   const res = await fetch(url, { signal: opts.signal });
   if (!res.ok) throw new Error(`USDA search failed (${res.status})`);

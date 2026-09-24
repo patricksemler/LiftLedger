@@ -42,6 +42,18 @@ describe("fdcToCandidate", () => {
     });
     expect(c).toMatchObject({ serving_desc: "100 g", calories: 91, protein_g: 6 });
   });
+
+  it("doesn't repeat grams already in the household serving text", () => {
+    const c = fdcToCandidate({
+      fdcId: 3,
+      description: "Black Beans",
+      servingSize: 130,
+      servingSizeUnit: "g",
+      householdServingFullText: "1/2 Cup (130g)",
+      foodNutrients: [{ nutrientId: 1008, unitName: "KCAL", value: 92 }],
+    });
+    expect(c.serving_desc).toBe("1/2 Cup (130g)");
+  });
 });
 
 describe("offToCandidate", () => {

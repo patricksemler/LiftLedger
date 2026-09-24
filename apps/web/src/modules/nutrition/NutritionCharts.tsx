@@ -115,7 +115,9 @@ function ChartBlock({
               axisLine={false}
               tickLine={false}
               width={36}
-              domain={["dataMin", "dataMax"]}
+              // Keep the target line in view even on light days.
+              domain={[0, (max: number) => Math.max(max, target ?? 0) * 1.05]}
+              tickFormatter={(v: number) => Math.round(v).toLocaleString()}
             />
             <Tooltip
               contentStyle={tooltipStyle}

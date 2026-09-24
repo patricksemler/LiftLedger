@@ -1,5 +1,5 @@
 import { Plus, Search, X } from "lucide-react";
-import { useDeferredValue, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Card } from "../../components/Card";
 import {
   type FoodSearchResult,
@@ -65,7 +65,12 @@ export function AddMealForm() {
   const savedFoods = useSavedFoods();
   const searchId = useId();
   const [query, setQuery] = useState("");
-  const deferredQuery = useDeferredValue(query);
+  // Debounced: the server's food databases are rate-limited.
+  const [deferredQuery, setDeferredQuery] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDeferredQuery(query), 350);
+    return () => clearTimeout(t);
+  }, [query]);
   const search = useFoodSearch(deferredQuery);
   const [staged, setStaged] = useState<StagedItem[]>([]);
   const [title, setTitle] = useState("");
