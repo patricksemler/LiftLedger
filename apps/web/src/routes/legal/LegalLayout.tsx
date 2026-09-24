@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 import { useLocation } from "react-router";
 import { SiteFooter } from "../../components/SiteFooter";
 import { SiteHeader } from "../../components/SiteHeader";
@@ -16,7 +16,7 @@ export const CONTACT_URL = "https://github.com/patricksemler/LiftLedger/issues";
 export function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
   const { pathname } = useLocation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
