@@ -13,6 +13,7 @@ grant select, insert, update, delete on
 to authenticated;
 
 grant select, update on public.profiles to authenticated;
+grant insert, update, delete on public.body_measurements to authenticated; -- manual rows only (RLS)
 grant select, delete on public.telegram_links to authenticated;
 
 -- Sync-owned / server-owned: read-only for the dashboard.

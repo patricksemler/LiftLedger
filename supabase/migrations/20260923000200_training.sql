@@ -73,7 +73,9 @@ create trigger hevy_sync_state_updated_at before update on public.hevy_sync_stat
 create table public.body_measurements (
   user_id uuid not null references auth.users on delete cascade,
   date date not null,
-  source text not null check (source in ('hevy', 'apple_health')),
+  -- 'manual' is a weigh-in typed into the dashboard, for users with no scale
+  -- syncing yet; synced sources win over it.
+  source text not null check (source in ('hevy', 'apple_health', 'manual')),
   weight_kg numeric,
   fat_percent numeric,
   synced_at timestamptz not null default now(),
@@ -105,8 +107,13 @@ begin
 end;
 $$;
 
--- Weigh-ins from the user's preferred source, falling back to the other one on
--- days the preferred source has nothing.
+create policy body_measurements_manual_write on public.body_measurements
+  for all to authenticated
+  using ((select auth.uid()) = user_id and source = 'manual')
+  with check ((select auth.uid()) = user_id and source = 'manual');
+
+-- Weigh-ins from the user's preferred source, falling back to the other synced
+-- source, then a manual entry, on days the preferred source has nothing.
 create view public.bodyweight
 with (security_invoker = true)
 as
@@ -115,4 +122,4 @@ select distinct on (m.user_id, m.date)
 from public.body_measurements m
 join public.profiles p on p.user_id = m.user_id
 where m.weight_kg is not null
-order by m.user_id, m.date, (m.source = p.weight_source) desc;
+order by m.user_id, m.date, (m.source = p.weight_source) desc, (m.source = 'manual') asc;

@@ -43,13 +43,24 @@ export const PROTEIN_PER_LB_RANGE = { min: 0.6, max: 1.2 } as const;
 /** Fat floor, grams per pound — below this hormones and satiety suffer. */
 const FAT_PER_LB_FLOOR = 0.3;
 
+/** Loose on purpose: DB rows carry sex/activity_level as plain text (check
+ * constraints, not enums), so anything unexpected counts as missing. */
 export interface GoalProfile {
   weight_kg: number | null;
   height_cm: number | null;
   birth_date: string | null;
-  sex: Sex | null;
-  activity_level: ActivityLevel | null;
+  sex: string | null;
+  activity_level: string | null;
 }
+
+const SEXES: readonly string[] = ["male", "female"];
+const ACTIVITY_LEVELS: readonly string[] = [
+  "sedentary",
+  "light",
+  "moderate",
+  "active",
+  "very_active",
+];
 
 export interface PresetTargets {
   preset: Exclude<GoalPreset, "custom">;
@@ -76,8 +87,9 @@ export function missingGoalFields(profile: GoalProfile): string[] {
   if (profile.weight_kg == null) missing.push("weight");
   if (profile.height_cm == null) missing.push("height");
   if (profile.birth_date == null) missing.push("birth date");
-  if (profile.sex == null) missing.push("sex");
-  if (profile.activity_level == null) missing.push("activity level");
+  if (profile.sex == null || !SEXES.includes(profile.sex)) missing.push("sex");
+  if (profile.activity_level == null || !ACTIVITY_LEVELS.includes(profile.activity_level))
+    missing.push("activity level");
   return missing;
 }
 
