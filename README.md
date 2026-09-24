@@ -46,7 +46,7 @@ Then:
 pnpm dev
 ```
 
-Sign up, then follow the onboarding. You need a Hevy Pro API key from hevy.com → Settings → Developer.
+Sign up, then open the confirmation email in the local mail catcher at http://127.0.0.1:55424. Password-reset emails land there too. Then follow the onboarding. You need a Hevy Pro API key from hevy.com → Settings → Developer.
 
 ### Optional pieces
 

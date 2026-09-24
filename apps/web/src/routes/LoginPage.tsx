@@ -1,13 +1,21 @@
 import { useActionState, useState } from "react";
 import { Link, type Location, Navigate, useLocation, useSearchParams } from "react-router";
+import {
+  AuthLayout,
+  MIN_PASSWORD_LENGTH,
+  authButtonClass,
+  authInputClass,
+  authLabelClass,
+  newPasswordError,
+} from "../components/AuthLayout";
 import { Card } from "../components/Card";
 import { useAuth } from "../lib/auth";
-import { supabase } from "../lib/supabase";
+import { authRedirectUrl, emailLinkError, supabase } from "../lib/supabase";
+import { LEGAL_VERSION } from "./legal/LegalLayout";
 
 type Mode = "sign_in" | "sign_up";
 
-const inputClass =
-  "mb-4 w-full rounded-md border border-border bg-surface-0 px-3 py-2 text-sm text-ink outline-none focus-visible:border-accent";
+type Result = { error: string; unconfirmed?: boolean } | null;
 
 export function LoginPage() {
   const { session, loading: sessionLoading } = useAuth();
@@ -17,25 +25,38 @@ export function LoginPage() {
   const [mode, setMode] = useState<Mode>(
     searchParams.get("mode") === "signup" ? "sign_up" : "sign_in",
   );
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  // Set after a sign-up that needs email confirmation: the address the link went to.
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
-  const [message, formAction, submitting] = useActionState<{
-    error?: string;
-    info?: string;
-  } | null>(async () => {
+  const [result, formAction, submitting] = useActionState<Result>(async () => {
     if (mode === "sign_in") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return error ? { error: error.message } : null;
+      if (!error) return null;
+      if (error.code === "email_not_confirmed") {
+        return { error: "Confirm your email before signing in.", unconfirmed: true };
+      }
+      return { error: error.message };
     }
+
+    const passwordError = newPasswordError(password, confirm);
+    if (passwordError) return { error: passwordError };
+    if (!agreed) return { error: "Accept the Terms of Service and Privacy Policy to continue." };
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: name.trim() || undefined } },
+      options: {
+        emailRedirectTo: authRedirectUrl("/login"),
+        data: { legal_accepted_at: new Date().toISOString(), legal_version: LEGAL_VERSION },
+      },
     });
     if (error) return { error: error.message };
-    if (!data.session) return { info: "Check your email to confirm your account, then sign in." };
+    // With email confirmation on there's no session until the link is clicked.
+    if (!data.session) setSentTo(email);
     return null;
   }, null);
 
@@ -44,95 +65,180 @@ export function LoginPage() {
     return <Navigate to={from?.pathname ?? "/"} replace />;
   }
 
-  const signUp = mode === "sign_up";
-
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-surface-0 px-4">
-      <div className="w-full max-w-sm">
-        <Link to="/welcome" className="mb-2 flex items-center justify-center gap-2">
-          <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
-          <span className="font-mono text-sm font-medium tracking-[0.2em] text-ink">
-            LIFTLEDGER
-          </span>
-        </Link>
-        <p className="mb-8 text-center text-xs text-ink-faint">
-          Your training, nutrition and health in one ledger.
-        </p>
-
-        <Card as="form" action={formAction} padding="lg" noValidate>
-          <h1 className="mb-6 text-base font-medium text-ink">
-            {signUp ? "Create your account" : "Sign in"}
-          </h1>
-
-          {signUp && (
-            <>
-              <label className="mb-1 block text-xs text-ink-dim" htmlFor="name">
-                Name
-              </label>
-              <input
-                id="name"
-                autoComplete="given-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={inputClass}
-              />
-            </>
-          )}
-
-          <label className="mb-1 block text-xs text-ink-dim" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={inputClass}
-          />
-
-          <label className="mb-1 block text-xs text-ink-dim" htmlFor="password">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete={signUp ? "new-password" : "current-password"}
-            required
-            minLength={signUp ? 8 : undefined}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-          />
-
-          {message?.error && (
-            <p role="alert" className="mb-4 text-sm text-negative">
-              {message.error}
-            </p>
-          )}
-          {message?.info && <p className="mb-4 text-sm text-ink-dim">{message.info}</p>}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {submitting ? "One moment…" : signUp ? "Create account" : "Sign in"}
-          </button>
+  if (sentTo) {
+    return (
+      <AuthLayout>
+        <Card padding="lg">
+          <h1 className="mb-3 text-base font-medium text-ink">Check your email</h1>
+          <p className="mb-4 text-sm text-ink-dim">
+            We sent a confirmation link to <span className="text-ink">{sentTo}</span>. Open it to
+            finish creating your account.
+          </p>
+          <ResendConfirmation email={sentTo} />
         </Card>
-
         <p className="mt-4 text-center text-xs text-ink-faint">
-          {signUp ? "Already have an account?" : "New here?"}{" "}
+          Already confirmed?{" "}
           <button
             type="button"
-            onClick={() => setMode(signUp ? "sign_in" : "sign_up")}
+            onClick={() => {
+              setSentTo(null);
+              setMode("sign_in");
+              setPassword("");
+            }}
             className="text-accent hover:underline"
           >
-            {signUp ? "Sign in" : "Create an account"}
+            Sign in
           </button>
         </p>
-      </div>
-    </div>
+      </AuthLayout>
+    );
+  }
+
+  const signUp = mode === "sign_up";
+  // Only on the page load the email link landed on, not later in-app visits.
+  const linkError = !result && location.key === "default" ? emailLinkError : null;
+
+  return (
+    <AuthLayout>
+      <Card as="form" action={formAction} padding="lg" noValidate>
+        <h1 className="mb-6 text-base font-medium text-ink">
+          {signUp ? "Create your account" : "Sign in"}
+        </h1>
+
+        {linkError && (
+          <p role="alert" className="mb-4 text-sm text-negative">
+            {linkError} Sign in to get a new one sent.
+          </p>
+        )}
+
+        <label className={authLabelClass} htmlFor="email">
+          Email
+        </label>
+        <input
+          id="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={authInputClass}
+        />
+
+        <div className="mb-1 flex items-baseline justify-between">
+          <label className="block text-xs text-ink-dim" htmlFor="password">
+            Password
+          </label>
+          {!signUp && (
+            <Link to="/forgot-password" className="text-xs text-accent hover:underline">
+              Forgot password?
+            </Link>
+          )}
+        </div>
+        <input
+          id="password"
+          type="password"
+          autoComplete={signUp ? "new-password" : "current-password"}
+          required
+          minLength={signUp ? MIN_PASSWORD_LENGTH : undefined}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className={authInputClass}
+        />
+
+        {signUp && (
+          <>
+            <label className={authLabelClass} htmlFor="confirm-password">
+              Confirm password
+            </label>
+            <input
+              id="confirm-password"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className={authInputClass}
+            />
+
+            <label className="mb-4 flex items-start gap-2 text-xs leading-relaxed text-ink-dim">
+              <input
+                type="checkbox"
+                required
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-accent"
+              />
+              <span>
+                I agree to the{" "}
+                <Link to="/terms" target="_blank" className="text-accent hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link to="/privacy" target="_blank" className="text-accent hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+          </>
+        )}
+
+        {result && (
+          <div role="alert" className="mb-4 text-sm text-negative">
+            <p>{result.error}</p>
+            {result.unconfirmed && <ResendConfirmation email={email} />}
+          </div>
+        )}
+
+        <button type="submit" disabled={submitting} className={authButtonClass}>
+          {submitting ? "One moment…" : signUp ? "Create account" : "Sign in"}
+        </button>
+      </Card>
+
+      <p className="mt-4 text-center text-xs text-ink-faint">
+        {signUp ? "Already have an account?" : "New here?"}{" "}
+        <button
+          type="button"
+          onClick={() => setMode(signUp ? "sign_in" : "sign_up")}
+          className="text-accent hover:underline"
+        >
+          {signUp ? "Sign in" : "Create an account"}
+        </button>
+      </p>
+    </AuthLayout>
+  );
+}
+
+/** Re-sends the sign-up confirmation email. A plain button rather than a
+ * form, since it can render inside the sign-in form. Supabase rate-limits
+ * resends, so a failure (usually "too many requests") is shown as-is. */
+function ResendConfirmation({ email }: { email: string }) {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | { error: string }>("idle");
+
+  async function resend() {
+    setState("sending");
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: authRedirectUrl("/login") },
+    });
+    setState(error ? { error: error.message } : "sent");
+  }
+
+  if (state === "sent") {
+    return <p className="mt-2 text-xs text-ink-dim">Sent — check your inbox (and spam folder).</p>;
+  }
+  return (
+    <p className="mt-2 text-xs">
+      <button
+        type="button"
+        onClick={resend}
+        disabled={state === "sending"}
+        className="text-accent hover:underline disabled:opacity-50"
+      >
+        {state === "sending" ? "Sending…" : "Resend confirmation email"}
+      </button>
+      {typeof state === "object" && <span className="ml-2 text-negative">{state.error}</span>}
+    </p>
   );
 }
