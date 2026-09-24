@@ -7,7 +7,8 @@ import { useAuth } from "../lib/auth";
  * minimal loading state (no flash of the wrong screen); once resolved, an
  * unauthenticated visit — including a direct deep-link while logged out —
  * redirects to /login, preserving the original location so login can return
- * there later.
+ * there later. A bare visit to the root goes to the public landing page
+ * instead, since there's nothing to return to.
  */
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
@@ -22,6 +23,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   if (!session) {
+    if (location.pathname === "/") return <Navigate to="/welcome" replace />;
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 

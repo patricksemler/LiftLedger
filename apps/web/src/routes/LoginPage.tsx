@@ -1,5 +1,5 @@
 import { useActionState, useState } from "react";
-import { type Location, Navigate, useLocation } from "react-router";
+import { Link, type Location, Navigate, useLocation, useSearchParams } from "react-router";
 import { Card } from "../components/Card";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
@@ -12,7 +12,11 @@ const inputClass =
 export function LoginPage() {
   const { session, loading: sessionLoading } = useAuth();
   const location = useLocation();
-  const [mode, setMode] = useState<Mode>("sign_in");
+  const [searchParams] = useSearchParams();
+  // The landing page's "Get started" links here with ?mode=signup.
+  const [mode, setMode] = useState<Mode>(
+    searchParams.get("mode") === "signup" ? "sign_up" : "sign_in",
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,12 +49,12 @@ export function LoginPage() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-surface-0 px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-2 flex items-center justify-center gap-2">
+        <Link to="/welcome" className="mb-2 flex items-center justify-center gap-2">
           <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
           <span className="font-mono text-sm font-medium tracking-[0.2em] text-ink">
             LIFTLEDGER
           </span>
-        </div>
+        </Link>
         <p className="mb-8 text-center text-xs text-ink-faint">
           Your training, nutrition and health in one ledger.
         </p>

@@ -5,6 +5,7 @@ import { PageSkeleton } from "./components/PageSkeleton";
 import { RequireAuth } from "./components/RequireAuth";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import { webModules } from "./modules";
+import { LandingPage } from "./routes/LandingPage";
 import { LoginPage } from "./routes/LoginPage";
 import { NotFoundPage } from "./routes/NotFoundPage";
 import { OnboardingPage, RequireOnboarded } from "./routes/OnboardingPage";
@@ -16,6 +17,7 @@ import { SettingsPage } from "./routes/SettingsPage";
 // entries. Every routed page gets its own `errorElement` so a render bug in
 // one page swaps only that page's content, leaving the shell working.
 const router = createBrowserRouter([
+  { path: "/welcome", element: <LandingPage />, errorElement: <RouteErrorBoundary /> },
   { path: "/login", element: <LoginPage />, errorElement: <RouteErrorBoundary /> },
   {
     path: "/onboarding",
