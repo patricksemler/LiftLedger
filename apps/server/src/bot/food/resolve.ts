@@ -11,7 +11,7 @@ import { searchFoods } from "../../foods/search";
 import type { FoodCandidate, Macros } from "../../foods/types";
 import { db } from "../../lib/db";
 import { logAiCall } from "../ai-log";
-import { type Amount, amountOf, isServingUnit, macrosFor } from "./amounts";
+import { type Amount, amountOf, macrosFor } from "./amounts";
 import type { ParsedItem } from "./schema";
 import { itemWarnings } from "./validate";
 
@@ -85,8 +85,12 @@ async function tryRecall(userId: string, item: ParsedItem) {
     p_limit: 1,
   });
   const best = data?.[0];
-  // Only reuse past numbers that came from something better than a guess.
-  return best && best.score >= 0.6 && best.match_source !== "llm" ? best : null;
+  // Only reuse a near-identical name ("greek yogurt" is not "greek yogurt
+  // bowl"), only numbers better than a guess, and never an entry that was
+  // implausible when it was logged.
+  if (!best || best.score < 0.8 || best.match_source === "llm") return null;
+  if (itemWarnings({ ...best, userStated: true }).length > 0) return null;
+  return best;
 }
 
 const pickSchema = z.object({
@@ -255,12 +259,12 @@ export async function resolveItems(
     const common = { name: item.name, brand: item.brand, quantity: item.quantity, unit: item.unit };
     const picked = picks.get(index);
     if (picked) {
-      // "2 eggs" against a generic per-100 g entry means two eggs, not two
-      // 100 g servings: use the gram estimate unless they said "servings".
+      // Generic 100 g entry: "a scoop" or "2 eggs" isn't 100 g per unit, so use the
+      // gram estimate. Label servings (branded foods) are honored as counted.
       let amt: Amount = amount;
       const genericEntry = picked.serving_desc === "100 g";
       if (
-        (amount.servings != null && genericEntry && !isServingUnit(item.unit)) ||
+        (amount.servings != null && genericEntry) ||
         (amount.grams == null && amount.servings == null)
       ) {
         const est = n(item.grams_estimate);
