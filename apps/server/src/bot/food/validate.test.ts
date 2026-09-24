@@ -29,3 +29,13 @@ describe("itemWarnings", () => {
     ).toMatch(/add up to ~245 kcal/);
   });
 });
+
+import { implausible } from "./resolve";
+
+describe("implausible", () => {
+  it("rejects a match 4x the model's estimate (condensed milk for a cup of milk)", () => {
+    expect(implausible(540, 122)).toBe(true);
+    expect(implausible(130, 122)).toBe(false);
+    expect(implausible(900, 20)).toBe(false); // estimate too small to judge
+  });
+});

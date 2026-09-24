@@ -116,7 +116,7 @@ async function pickCandidates(
       const header = `Item ${p.index}: ${p.item.quantity ?? ""} ${p.item.unit ?? ""} ${p.item.name}${p.item.brand ? ` (brand: ${p.item.brand})` : ""}`;
       const options = p.candidates.map(
         (c, i) =>
-          `  [${i}] ${c.name}${c.brand ? ` — ${c.brand}` : ""} · ${Math.round(c.calories)} kcal per ${c.serving_desc}`,
+          `  [${i}] ${c.name}${c.brand ? ` — ${c.brand}` : ""} · ${Math.round(c.calories)} kcal per ${c.serving_desc}${c.per100g ? ` (${Math.round(c.per100g.calories)} kcal/100 g)` : ""}`,
       );
       return [header, ...options].join("\n");
     })
@@ -125,7 +125,7 @@ async function pickCandidates(
     const r = await generateText({
       model,
       instructions:
-        "Match each eaten item to the database candidate describing the same food in the same state (cooked vs raw, canned vs dry, brand when given). Prefer the stated brand. Return null when nothing is a real match — a wrong match is worse than none.",
+        "Match each eaten item to the database candidate describing the same food in the same state (cooked vs raw, canned vs dry, liquid vs powder/condensed, brand when given). Prefer the stated brand. Check the kcal/100 g is plausible for that food. Return null when nothing is a real match — a wrong match is worse than none.",
       prompt: listing,
       output: Output.object({ schema: pickSchema }),
       timeout: 60_000,
@@ -142,11 +142,27 @@ async function pickCandidates(
   return result;
 }
 
+/** Keeps only "user-stated" numbers that literally occur in the message —
+ * models (small ones especially) like to invent the macros nobody said. */
+export function groundUserValues(items: ParsedItem[], rawText: string | null): ParsedItem[] {
+  const numbers = new Set((rawText ?? "").match(/\d+(?:\.\d+)?/g)?.map(Number) ?? []);
+  return items.map((item) => {
+    const u = { ...item.user_values };
+    for (const k of ["calories", "protein_g", "carbs_g", "fat_g", "fiber_g"] as const) {
+      const v = u[k];
+      if (v != null && !numbers.has(v)) u[k] = null;
+    }
+    return { ...item, user_values: u };
+  });
+}
+
 export async function resolveItems(
   userId: string,
   model: LanguageModel,
-  items: ParsedItem[],
+  rawItems: ParsedItem[],
+  rawText: string | null,
 ): Promise<ResolvedItem[]> {
+  const items = groundUserValues(rawItems, rawText);
   const resolved: (ResolvedItem | null)[] = items.map(() => null);
   const needsLookup: { index: number; item: ParsedItem; candidates: FoodCandidate[] }[] = [];
 
@@ -250,6 +266,9 @@ export async function resolveItems(
         if (est != null) amt = { grams: est, servings: null };
       }
       const { macros, grams } = macrosFor(picked, amt);
+      if (implausible(macros.calories, n(item.estimate.calories))) {
+        return estimated(item, amount, "estimate — database match looked off");
+      }
       const user = applyUserValues(macros, item.user_values);
       return {
         ...common,
@@ -262,17 +281,33 @@ export async function resolveItems(
         userStated: user.any,
       };
     }
-    const user = applyUserValues(estimateOf(item), item.user_values);
-    return {
-      ...common,
-      ...user.macros,
-      grams: amount.grams ?? n(item.grams_estimate),
-      match_source: user.any ? "user" : "llm",
-      match_ref: null,
-      label: user.any ? "your numbers + estimate" : "estimate",
-      userStated: user.any,
-    };
+    return estimated(item, amount, "estimate");
   });
+}
+
+/** A database match whose calories are wildly off the model's own estimate
+ * is almost always the wrong product (powdered vs liquid, a 100 g default
+ * applied to a whole pizza...). */
+export function implausible(dbKcal: number, estimateKcal: number | null): boolean {
+  if (estimateKcal == null || estimateKcal < 40) return false;
+  const ratio = dbKcal / estimateKcal;
+  return ratio > 2.5 || ratio < 0.4;
+}
+
+function estimated(item: ParsedItem, amount: Amount, label: string): ResolvedItem {
+  const user = applyUserValues(estimateOf(item), item.user_values);
+  return {
+    name: item.name,
+    brand: item.brand,
+    quantity: item.quantity,
+    unit: item.unit,
+    ...user.macros,
+    grams: amount.grams ?? n(item.grams_estimate),
+    match_source: user.any ? "user" : "llm",
+    match_ref: null,
+    label: user.any ? "your numbers + estimate" : label,
+    userStated: user.any,
+  };
 }
 
 export function mealConfidence(items: ResolvedItem[]): "high" | "medium" | "low" {

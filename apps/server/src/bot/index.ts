@@ -3,15 +3,13 @@
 // every message is routed to food logging or Q&A for that user.
 
 import { Bot, type Context, InlineKeyboard } from "grammy";
-import { getUserModel } from "../ai/provider";
 import { env } from "../env";
 import { sha256 } from "../lib/crypto";
 import { db, maybe, must, ok } from "../lib/db";
-import { answerQuestion } from "./agent/agent";
 import { loadUserContext } from "./context";
-import { editLastMeal, getMeal, logFoodMessage, mealSummary, scaleMeal } from "./food/pipeline";
+import { getMeal, mealSummary, scaleMeal } from "./food/pipeline";
 import { esc, todayLine, totalsLine } from "./format";
-import { classify } from "./router";
+import { respond } from "./respond";
 
 export const bot = env.TELEGRAM_BOT_TOKEN ? new Bot(env.TELEGRAM_BOT_TOKEN) : null;
 
@@ -35,17 +33,6 @@ async function linkedUser(chatId: number): Promise<string | null> {
     await db.from("telegram_links").select("user_id").eq("chat_id", chatId).maybeSingle(),
   );
   return row?.user_id ?? null;
-}
-
-async function remember(
-  userId: string,
-  role: "user" | "assistant",
-  content: string,
-  mealId: string | null = null,
-) {
-  await db
-    .from("bot_messages")
-    .insert({ user_id: userId, role, content: content.slice(0, 4000), meal_id: mealId });
 }
 
 async function requireLinked(ctx: Context): Promise<string | null> {
@@ -129,56 +116,16 @@ async function totalsReply(userId: string, days: number): Promise<string> {
 async function handleMessage(ctx: Context, text: string | null, withPhoto: boolean) {
   const userId = await requireLinked(ctx);
   if (!userId) return;
-  const ai = await getUserModel(userId);
-  if (!ai) {
-    await ctx.reply(
-      "Connect an AI model in LiftLedger → Settings → Connections so I can read meals and answer questions. Until then: /today and /week work.",
-    );
-    return;
-  }
-  if (withPhoto && !ai.config.supports_vision) {
-    await ctx.reply(
-      "Your AI model can't read images. Describe the meal in text instead, e.g. “chicken, rice and broccoli”.",
-    );
-    return;
-  }
-
   await withTyping(ctx, async () => {
-    const uctx = await loadUserContext(userId);
     const image = withPhoto ? await downloadPhoto(ctx) : null;
-    const intent =
-      withPhoto && !text?.includes("?")
-        ? { intent: "log_food" as const, reply: null }
-        : await classify(uctx, ai.model, text ?? "", withPhoto);
-
-    if (intent.intent === "log_food") {
-      const r = await logFoodMessage(uctx, ai.model, { text, image });
-      await remember(userId, "user", text ?? "[photo]");
-      await remember(userId, "assistant", r.text.replace(/<[^>]+>/g, ""), r.mealId);
-      await ctx.reply(r.text, {
-        parse_mode: "HTML",
-        reply_markup: r.mealId ? mealKeyboard(r.mealId) : undefined,
-      });
-    } else if (intent.intent === "edit_food") {
-      const r = await editLastMeal(uctx, ai.model, text ?? "");
-      await ctx.reply(r.text, {
-        parse_mode: "HTML",
-        reply_markup: r.mealId ? mealKeyboard(r.mealId) : undefined,
-      });
-    } else if (intent.intent === "question") {
-      if (!ai.config.supports_tools) {
-        await ctx.reply(
-          "Your AI model doesn't support tool calling, which I need to look up your data. Try a model that does (most hosted ones do).",
-        );
-        return;
-      }
-      const answer = await answerQuestion(uctx, ai.model, text ?? "");
-      await remember(userId, "user", text ?? "");
-      await remember(userId, "assistant", answer);
-      await ctx.reply(answer, { parse_mode: "Markdown" }).catch(() => ctx.reply(answer));
-    } else {
-      await ctx.reply(intent.reply ?? "👍");
-    }
+    const reply = await respond(userId, { text, image, hasPhoto: withPhoto });
+    await ctx
+      .reply(reply.text, {
+        parse_mode: reply.format,
+        reply_markup: reply.mealId ? mealKeyboard(reply.mealId) : undefined,
+      })
+      // Model-written Markdown can be malformed; fall back to plain text.
+      .catch(() => ctx.reply(reply.text));
   });
 }
 

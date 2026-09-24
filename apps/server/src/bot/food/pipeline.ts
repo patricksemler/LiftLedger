@@ -7,7 +7,7 @@ import type { UserContext } from "../context";
 import { esc, itemLine, todayLine, totalsLine } from "../format";
 import { parseFood } from "./parse";
 import { type ResolvedItem, mealConfidence, resolveItems } from "./resolve";
-import { editSchema } from "./schema";
+import { type EditOps, editSchema } from "./schema";
 import { itemWarnings } from "./validate";
 
 export interface FoodReply {
@@ -71,8 +71,8 @@ export async function logFoodMessage(
     };
   }
 
-  const items = await resolveItems(ctx.userId, model, parsed.items);
-  const warnings = items.flatMap((i) => itemWarnings({ ...i }));
+  const items = await resolveItems(ctx.userId, model, parsed.items, input.text);
+  const warnings = [...new Set(items.flatMap((i) => itemWarnings({ ...i })))];
   const mealId = must(
     await db.rpc("log_meal", {
       p_user_id: ctx.userId,
@@ -178,6 +178,36 @@ export function mealSummary(meal: MealWithItems): string {
   ].join("\n");
 }
 
+const words = (s: string) =>
+  new Set(
+    s
+      .toLowerCase()
+      .match(/[a-z]{3,}/g)
+      ?.filter((w) => !STOP.has(w)) ?? [],
+  );
+const STOP = new Set([
+  "the",
+  "and",
+  "was",
+  "that",
+  "actually",
+  "also",
+  "with",
+  "some",
+  "had",
+  "cup",
+  "cups",
+  "servings",
+  "serving",
+]);
+
+/** Drops operations the correction doesn't support: added foods must share a
+ * word with what the user wrote. */
+export function sanitizeOps(ops: EditOps["operations"], correction: string): EditOps["operations"] {
+  const said = words(correction);
+  return ops.filter((op) => op.op !== "add_items" || [...words(op.text)].some((w) => said.has(w)));
+}
+
 export async function editLastMeal(
   ctx: UserContext,
   model: LanguageModel,
@@ -208,7 +238,7 @@ export async function editLastMeal(
   await logAiCall(ctx.userId, "food.edit", started, { usage: r.usage });
 
   const byIndex = meal.meal_items;
-  for (const op of r.output.operations) {
+  for (const op of sanitizeOps(r.output.operations, text)) {
     if (op.op === "scale_all") await scaleMeal(ctx.userId, meal, op.factor);
     else if (op.op === "rename")
       ok(
@@ -224,7 +254,7 @@ export async function editLastMeal(
         image: null,
         today: ctx.today,
       });
-      const items = await resolveItems(ctx.userId, model, parsed.items);
+      const items = await resolveItems(ctx.userId, model, parsed.items, op.text);
       const start = byIndex.length;
       if (items.length > 0) {
         ok(

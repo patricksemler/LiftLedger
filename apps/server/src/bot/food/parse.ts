@@ -9,6 +9,7 @@ const INSTRUCTIONS = `You extract what someone ate from a message (and photo, if
 
 Rules:
 - One item per distinct food. Keep the user's quantities and units exactly ("3 servings", "1 cup", "200 g").
+- A number followed by a nutrient word ("50 cals", "200g protein", "30 carbs", "10 fat") is a nutrition value for the food it follows — never a separate item and never its quantity.
 - If they state numbers (calories, protein...), copy them into user_values for that item exactly as stated, even if they look wrong. Never put your own guesses in user_values.
 - estimate: your best reference-value estimate for the whole quantity (USDA-style), always filled.
 - grams_estimate: total grams for the stated quantity (a cup of cooked beans ≈ 172 g; a slice of bread ≈ 30 g). For photos, estimate portions visually.
