@@ -297,3 +297,22 @@ The dev test user's Hevy key comes from Phobos `.env.local` (`HEVY_API_KEY`), an
   3. Ask "how have my biceps progressed over 6 weeks", "have I been hitting my calorie goal — what am I overeating on", and "what was my weight in Hevy yesterday"; check each answer against SQL.
 - **Health:** `curl` the captured payload to `/ingest/health` with the token; steps appear on Training and the energy balance on Nutrition. Then run it from the iPhone through a tunnel.
 - **Degradation:** a user with only Hevy connected sees no errors, just "Connect" empty states.
+
+---
+
+## Status (2026-09-23)
+
+| Phase | State |
+|---|---|
+| 0 Scaffold | ✅ monorepo, shared package ported (153 tests), local Supabase on 5542x |
+| 1 Accounts & connections | ✅ sign-up, onboarding wizard, encrypted keys, Connections panel |
+| 2 Training | ✅ Hevy backfill + events sync verified on a real account (61 workouts, 1,213 sets, 453 templates) |
+| 3 Nutrition core | ✅ item-level meals, goal presets/history, food search, adherence, top foods |
+| 4 AI + Telegram logging | ✅ code complete; pipeline verified via `simulate` on a local model. Live Telegram needs a LiftLedger bot token |
+| 5 Q&A agent | ✅ tools verified against real data via `scripts/tools.ts`; needs a tool-capable model to run end-to-end |
+| 6 Apple Health | ✅ ingest verified with a synthetic payload; **capture a real Health Auto Export payload** and add it as a fixture |
+| 7 Hardening | 🟡 food eval harness in place; Q&A eval and rate limiting still to do |
+
+Deviations from the plan above:
+- `body_measurements.source` also allows `manual`, so users without a synced scale can still get goal presets.
+- Routing uses deterministic cues (corrections, questions, small talk) before the model, and food resolution grounds "user-stated" numbers in the message text. Both were added after testing against a small local model.
