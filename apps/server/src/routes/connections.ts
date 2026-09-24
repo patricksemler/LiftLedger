@@ -4,7 +4,7 @@ import { z } from "zod";
 import { type AiConfig, buildModel, checkBaseUrl, probeModel } from "../ai/provider";
 import { env } from "../env";
 import { HevyClient, HevyError } from "../integrations/hevy/client";
-import { enqueueHevySync } from "../jobs/boss";
+import { requestHevySync } from "../jobs/dispatch";
 import type { AuthVars } from "../lib/auth";
 import { randomToken, sha256 } from "../lib/crypto";
 import { db, ok } from "../lib/db";
@@ -40,7 +40,7 @@ connections.post("/hevy", async (c) => {
     secret_last4: last4(apiKey),
     last_error: null,
   });
-  await enqueueHevySync(userId);
+  await requestHevySync(userId);
   return c.json({ workoutCount });
 });
 

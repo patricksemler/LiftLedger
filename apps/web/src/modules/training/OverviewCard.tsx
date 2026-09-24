@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card } from "../../components/Card";
 import { InlineErrorState } from "../../components/ErrorState";
 import { volumeDeltaLabel, weeklyVolumeSeries } from "./derive";
-import { useAllSetsWithWorkoutMeta } from "./queries";
+import { useAllSetsWithWorkoutMeta, useSyncIfStale } from "./queries";
 
 // Muscle-group breakdown isn't needed for a totals-only overview card, so
 // this card skips the exercise-templates query entirely — every set just
@@ -15,6 +15,7 @@ const EMPTY_MUSCLE_MAP = new Map<string, string | null>();
  */
 export function TrainingOverviewCard() {
   const allSetsQuery = useAllSetsWithWorkoutMeta();
+  useSyncIfStale();
 
   const { points } = useMemo(
     () => weeklyVolumeSeries(allSetsQuery.data ?? [], EMPTY_MUSCLE_MAP, 2, new Date()),

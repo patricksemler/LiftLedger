@@ -17,11 +17,14 @@
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/shared/src/database.types.ts",
-    "db:test": "docker exec -i supabase_db_liftledger psql -U postgres -v ON_ERROR_STOP=1 -q < supabase/tests/rls_and_meals.sql"
+    "db:test": "docker exec -i supabase_db_liftledger psql -U postgres -v ON_ERROR_STOP=1 -q < supabase/tests/rls_and_meals.sql",
+    "build:vercel": "node scripts/build-vercel.mjs",
+    "deploy:vercel": "pnpm build:vercel && vercel deploy --prebuilt --prod"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.10.2",
+    "esbuild": "^0.28.2",
     "typescript": "^5.7.3"
   },
   "pnpm": {

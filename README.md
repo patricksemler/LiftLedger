@@ -55,6 +55,24 @@ Sign up, then follow the onboarding. You need a Hevy Pro API key from hevy.com �
 - **USDA FoodData Central:** `DEMO_KEY` is limited to about 30 requests an hour. Get a free key at https://fdc.nal.usda.gov/api-key-signup/ and set `USDA_FDC_API_KEY`.
 - **Apple Health:** Settings → Connections → Set up Apple Health shows the URL and bearer token to paste into Health Auto Export. Your phone has to reach the server: use a tunnel (cloudflared, Tailscale Funnel) or the Mac's LAN IP.
 
+## Deploying to Vercel
+
+The hosted instance runs as one Vercel project: the web app as static files and the server as a single function behind `/api`, `/ingest`, `/telegram` and `/cron` (`apps/server/src/vercel.ts`). Vercel has no worker process, so pg-boss isn't used there:
+
+- Hevy syncs run after the response (`waitUntil`), one per user at a time under a lease on `hevy_sync_state`.
+- The dashboard asks for a sync on open when the last one is over 30 minutes old, and `/cron/daily` syncs everyone once a day (Hobby plans only allow daily crons) and cleans up expired rows.
+- The Telegram bot is webhook-only. The webhook acknowledges first and handles the update afterwards, so a slow model call can't make Telegram re-send a meal.
+
+Build and deploy from your machine with the Vercel CLI linked to the project:
+
+```bash
+pnpm deploy:vercel
+```
+
+That runs `scripts/build-vercel.mjs`, which produces prebuilt output (Build Output API) and then uploads it. The web build reads `apps/web/.env.production`, where `VITE_API_URL` is empty (same origin) and `VITE_HOSTED=true` hides the self-host-only AI options. The function reads the server variables from the Vercel project: the same ones as `.env.example` minus `DATABASE_URL`, plus `CRON_SECRET`, `TELEGRAM_MODE=webhook`, `ALLOW_PRIVATE_AI_URLS=false` and `CODEX_CLI_ENABLED=false`.
+
+Apply new migrations to the hosted database with `supabase db push`. After changing the webhook secret or domain, point Telegram at `https://<domain>/telegram/webhook` with `setWebhook` and the `secret_token`. A local server polling the same bot token removes the webhook when it starts, so develop against a separate bot.
+
 ## Commands
 
 Run everything (typecheck, lint, tests, build):

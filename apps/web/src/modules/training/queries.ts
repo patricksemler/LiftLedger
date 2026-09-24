@@ -10,6 +10,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { apiPost } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
 
@@ -183,4 +184,19 @@ export function useSyncNow() {
       void queryClient.invalidateQueries({ queryKey: trainingQueryKeys.syncState });
     },
   });
+}
+
+let staleSyncRequested = false;
+
+/** Once per page load, asks the server to sync Hevy if the last run is more
+ * than 30 minutes old. The hosted (serverless) deployment only has a daily
+ * cron, so opening the dashboard is what keeps workouts fresh; results land
+ * via the Realtime subscriptions. Errors (e.g. Hevy not connected) are
+ * irrelevant here and ignored. */
+export function useSyncIfStale() {
+  useEffect(() => {
+    if (staleSyncRequested) return;
+    staleSyncRequested = true;
+    apiPost("/api/hevy/sync", { ifStaleMinutes: 30 }).catch(() => {});
+  }, []);
 }

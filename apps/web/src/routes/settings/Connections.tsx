@@ -138,16 +138,29 @@ export function HevyConnection({ onConnected }: { onConnected?: () => void }) {
   );
 }
 
+// The hosted build (VITE_HOSTED=true) is shared by everyone: Codex CLI would
+// run on the host's own ChatGPT account and is disabled server-side, and the
+// server can't reach anyone's localhost, so only bring-your-own-key options
+// are offered there.
+const HOSTED = import.meta.env.VITE_HOSTED === "true";
+
 const AI_PRESETS: Record<AiProviderKind, { label: string; model: string; baseUrl?: string }> = {
   codex_cli: { label: "Codex CLI (ChatGPT plan on this server)", model: "default" },
   anthropic: { label: "Anthropic (Claude)", model: "claude-sonnet-5" },
   openai: { label: "OpenAI", model: "gpt-5" },
-  openai_compatible: {
-    label: "Local / OpenAI-compatible URL",
-    model: "llama3.2-vision",
-    baseUrl: "http://localhost:11434/v1",
-  },
+  openai_compatible: HOSTED
+    ? { label: "OpenAI-compatible URL (OpenRouter, Groq, …)", model: "", baseUrl: "" }
+    : {
+        label: "Local / OpenAI-compatible URL",
+        model: "llama3.2-vision",
+        baseUrl: "http://localhost:11434/v1",
+      },
 };
+
+const AI_KINDS = (Object.keys(AI_PRESETS) as AiProviderKind[]).filter(
+  (k) => !(HOSTED && k === "codex_cli"),
+);
+const DEFAULT_AI_KIND: AiProviderKind = HOSTED ? "openai" : "codex_cli";
 
 export function AiConnection() {
   const integration = useIntegration("ai");
@@ -161,8 +174,8 @@ export function AiConnection() {
     supports_tools?: boolean;
   };
   const [editing, setEditing] = useState(!integration);
-  const [kind, setKind] = useState<AiProviderKind>(config.kind ?? "codex_cli");
-  const [model, setModel] = useState(config.model ?? AI_PRESETS.codex_cli.model);
+  const [kind, setKind] = useState<AiProviderKind>(config.kind ?? DEFAULT_AI_KIND);
+  const [model, setModel] = useState(config.model ?? AI_PRESETS[DEFAULT_AI_KIND].model);
   const [baseUrl, setBaseUrl] = useState(config.base_url ?? "");
   const [apiKey, setApiKey] = useState("");
 
@@ -189,7 +202,7 @@ export function AiConnection() {
   return (
     <ConnectionCard
       title="AI model"
-      subtitle="Powers the Telegram bot: reading meals and answering questions. Bring your own key or a local model."
+      subtitle={`Powers the Telegram bot: reading meals and answering questions. ${HOSTED ? "Bring your own API key." : "Bring your own key or a local model."}`}
       integration={integration}
     >
       {integration && !editing ? (
@@ -222,7 +235,7 @@ export function AiConnection() {
             onChange={(e) => chooseKind(e.target.value as AiProviderKind)}
             className={inputClass}
           >
-            {(Object.keys(AI_PRESETS) as AiProviderKind[]).map((k) => (
+            {AI_KINDS.map((k) => (
               <option key={k} value={k}>
                 {AI_PRESETS[k].label}
               </option>
@@ -230,7 +243,7 @@ export function AiConnection() {
           </select>
           {kind === "openai_compatible" && (
             <input
-              placeholder="Base URL, e.g. http://localhost:11434/v1"
+              placeholder={`Base URL, e.g. ${HOSTED ? "https://openrouter.ai/api/v1" : "http://localhost:11434/v1"}`}
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               className={`${inputClass} font-mono`}
@@ -253,7 +266,7 @@ export function AiConnection() {
             <input
               type="password"
               autoComplete="off"
-              placeholder={needsKey ? "API key" : "API key (if your server needs one)"}
+              placeholder={needsKey || HOSTED ? "API key" : "API key (if your server needs one)"}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               className={`${inputClass} font-mono`}

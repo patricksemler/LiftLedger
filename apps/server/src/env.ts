@@ -9,7 +9,9 @@ const schema = z.object({
   WEB_ORIGIN: z.string().default("http://localhost:5180"),
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
-  DATABASE_URL: z.string().min(1),
+  /** Postgres connection for pg-boss. Only the long-running Node server
+   * needs it; the Vercel function talks to Supabase over HTTP. */
+  DATABASE_URL: z.string().min(1).optional(),
   /** 32 random bytes, base64. `openssl rand -base64 32` */
   LIFTLEDGER_ENCRYPTION_KEY: z
     .string()
@@ -26,6 +28,8 @@ const schema = z.object({
     .default("true")
     .transform((v) => v === "true"),
   HEVY_SYNC_CRON: z.string().default("*/30 * * * *"),
+  /** Vercel Cron's bearer token for /cron/daily; the route 401s without it. */
+  CRON_SECRET: z.string().min(16).optional(),
   /** Let users pick "Codex CLI": runs `codex exec` on this server with the
    * ChatGPT account signed in to Codex here. Self-hosted installs only —
    * every user who picks it shares that account. */

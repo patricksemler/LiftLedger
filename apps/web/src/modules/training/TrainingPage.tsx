@@ -30,6 +30,7 @@ import {
   useBodyMeasurements,
   useExerciseTemplates,
   useRecentWorkouts,
+  useSyncIfStale,
   useSyncState,
 } from "./queries";
 
@@ -70,6 +71,7 @@ function EmptyState() {
 
 function TrainingPageContent() {
   const syncStateQuery = useSyncState();
+  useSyncIfStale();
   const recentWorkoutsQuery = useRecentWorkouts(RECENT_WORKOUTS_LIMIT);
   const allSetsQuery = useAllSetsWithWorkoutMetaSuspense();
   const templatesQuery = useExerciseTemplates();

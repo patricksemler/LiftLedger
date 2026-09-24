@@ -82,7 +82,7 @@ export function LandingPage() {
       </header>
 
       <main>
-        <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 pt-8 pb-16 md:grid-cols-[1fr_auto] md:gap-12 md:px-8 md:pt-16 md:pb-24">
+        <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 pt-8 pb-16 md:px-8 md:pt-16 md:pb-24 lg:grid-cols-[1fr_auto] lg:gap-12">
           <div className="max-w-xl">
             <p className="mb-4 font-mono text-xs tracking-[0.15em] text-accent uppercase">
               Training · Nutrition · Health
@@ -162,7 +162,7 @@ function BodyDemo({
   return (
     // Two figures side by side need ~146px each at 250px tall, which with p-4
     // just fits a 375px phone; larger screens get the roomier size.
-    <Card padding="none" className="mx-auto w-full max-w-md p-4 sm:p-6 md:w-[440px]">
+    <Card padding="none" className="mx-auto w-full max-w-md p-4 sm:p-6 lg:w-[440px]">
       <div className="mb-4 flex items-baseline justify-between">
         <span className="text-xs text-ink-dim">Muscle heatmap</span>
         <span className="font-mono text-xs text-ink-faint">last 30d · sets</span>

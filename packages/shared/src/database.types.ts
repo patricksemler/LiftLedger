@@ -224,6 +224,7 @@ export type Database = {
           last_error: string | null
           last_event_sync: string | null
           last_run_at: string | null
+          sync_lease_until: string | null
           templates_synced_at: string | null
           updated_at: string
           user_id: string
@@ -235,6 +236,7 @@ export type Database = {
           last_error?: string | null
           last_event_sync?: string | null
           last_run_at?: string | null
+          sync_lease_until?: string | null
           templates_synced_at?: string | null
           updated_at?: string
           user_id: string
@@ -246,6 +248,7 @@ export type Database = {
           last_error?: string | null
           last_event_sync?: string | null
           last_run_at?: string | null
+          sync_lease_until?: string | null
           templates_synced_at?: string | null
           updated_at?: string
           user_id?: string
