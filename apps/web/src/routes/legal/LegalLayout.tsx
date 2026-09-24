@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { SiteFooter } from "../../components/SiteFooter";
+import { SiteHeader } from "../../components/SiteHeader";
 
 /** Version of the Terms + Privacy Policy. Recorded in the user's auth
  * metadata at sign-up (`legal_version`); bump it with LAST_UPDATED whenever
@@ -21,17 +22,7 @@ export function LegalLayout({ title, children }: { title: string; children: Reac
 
   return (
     <div className="min-h-dvh bg-surface-0">
-      <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5 md:px-8">
-        <Link to="/welcome" className="flex items-center gap-2">
-          <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
-          <span className="font-mono text-sm font-medium tracking-[0.2em] text-ink">
-            LIFTLEDGER
-          </span>
-        </Link>
-        <Link to="/login" className="text-sm text-ink-dim hover:text-ink">
-          Sign in
-        </Link>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto max-w-3xl px-4 pt-6 pb-16 md:px-8">
         <h1 className="mb-1 text-2xl font-semibold tracking-tight text-ink">{title}</h1>

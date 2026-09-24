@@ -4,6 +4,7 @@ import { type ReactNode, useCallback, useState } from "react";
 import { Link, Navigate } from "react-router";
 import { Card } from "../components/Card";
 import { SiteFooter } from "../components/SiteFooter";
+import { SiteHeader } from "../components/SiteHeader";
 import { useAuth } from "../lib/auth";
 import { MacroBar } from "../modules/nutrition/MacroBar";
 import { BodySilhouette } from "../modules/training/BodySilhouette";
@@ -65,22 +66,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-dvh bg-surface-0">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 md:px-8">
-        <div className="flex items-center gap-2">
-          <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
-          <span className="font-mono text-sm font-medium tracking-[0.2em] text-ink">
-            LIFTLEDGER
-          </span>
-        </div>
-        <nav className="flex items-center gap-2">
-          <Link to="/login" className="px-3 py-2 text-sm text-ink-dim hover:text-ink">
-            Sign in
-          </Link>
-          <Link to="/login?mode=signup" className={ctaPrimary}>
-            Get started
-          </Link>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 pt-8 pb-16 md:px-8 md:pt-16 md:pb-24 lg:grid-cols-[1fr_auto] lg:gap-12">
