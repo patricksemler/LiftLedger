@@ -757,6 +757,40 @@ export type Database = {
         }
         Returns: string
       }
+      match_recent_items: {
+        Args: { p_limit?: number; p_query: string; p_user_id: string }
+        Returns: {
+          brand: string
+          calories: number
+          carbs_g: number
+          fat_g: number
+          fiber_g: number
+          grams: number
+          match_source: string
+          name: string
+          protein_g: number
+          quantity: number
+          score: number
+          times: number
+          unit: string
+        }[]
+      }
+      match_saved_foods: {
+        Args: { p_limit?: number; p_query: string; p_user_id: string }
+        Returns: {
+          brand: string
+          calories: number
+          carbs_g: number
+          fat_g: number
+          fiber_g: number
+          id: string
+          name: string
+          protein_g: number
+          score: number
+          serving_desc: string
+          serving_grams: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,0 +1,31 @@
+{
+  "name": "@liftledger/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env.local src/index.ts",
+    "start": "tsx --env-file-if-exists=.env.local src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.62",
+    "@ai-sdk/openai": "^4.0.74",
+    "@ai-sdk/openai-compatible": "^3.0.55",
+    "@hono/node-server": "^2.1.1",
+    "@liftledger/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.117.1",
+    "ai": "^7.0.113",
+    "grammy": "^1.46.0",
+    "hono": "^4.13.9",
+    "pg-boss": "^12.34.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  }
+}
