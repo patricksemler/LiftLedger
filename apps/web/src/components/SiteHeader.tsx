@@ -7,21 +7,23 @@ const ctaPrimary =
  * the logo, width and nav the same on every page. */
 export function SiteHeader() {
   return (
-    <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 md:px-8">
-      <Link to="/welcome" className="flex items-center gap-2">
-        <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
-        <span className="font-mono text-sm font-medium tracking-[0.2em] text-ink">
-          LIFTLEDGER
-        </span>
-      </Link>
-      <nav className="flex items-center gap-2">
-        <Link to="/login" className="px-3 py-2 text-sm text-ink-dim hover:text-ink">
-          Sign in
+    <header className="border-b border-border">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 md:px-8">
+        <Link to="/welcome" className="flex items-center gap-2">
+          <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
+          <span className="font-mono text-sm font-medium tracking-[0.2em] text-ink">
+            LIFTLEDGER
+          </span>
         </Link>
-        <Link to="/login?mode=signup" className={ctaPrimary}>
-          Get started
-        </Link>
-      </nav>
+        <nav className="flex items-center gap-2">
+          <Link to="/login" className="px-3 py-2 text-sm text-ink-dim hover:text-ink">
+            Sign in
+          </Link>
+          <Link to="/login?mode=signup" className={ctaPrimary}>
+            Get started
+          </Link>
+        </nav>
+      </div>
     </header>
   );
 }
