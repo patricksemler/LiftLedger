@@ -39,7 +39,7 @@ export async function parseFood(
       instructions: INSTRUCTIONS,
       messages: [{ role: "user", content }],
       output: Output.object({ schema: parsedMealSchema }),
-      timeout: 90_000,
+      timeout: 180_000,
     });
     await logAiCall(userId, input.image ? "food.parse_photo" : "food.parse", started, {
       usage: result.usage,

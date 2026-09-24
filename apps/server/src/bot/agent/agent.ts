@@ -53,7 +53,7 @@ export async function answerQuestion(
       ],
       tools: buildTools(ctx),
       stopWhen: stepCountIs(7),
-      timeout: 120_000,
+      timeout: 300_000,
     });
     await logAiCall(ctx.userId, "agent", started, {
       usage: result.totalUsage,

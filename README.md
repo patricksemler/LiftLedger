@@ -51,7 +51,7 @@ Sign up, then follow the onboarding. You need a Hevy Pro API key from hevy.com �
 ### Optional pieces
 
 - **Telegram:** create a bot with @BotFather and set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` and `TELEGRAM_MODE=polling`. In production, set `TELEGRAM_MODE=webhook` with `TELEGRAM_WEBHOOK_SECRET` and a public `PUBLIC_BASE_URL`. Use a dedicated bot: Telegram allows one consumer per token.
-- **AI model:** chosen per user in Settings → Connections. The options are Anthropic, OpenAI, or any OpenAI-compatible URL such as Ollama (`http://localhost:11434/v1`) or LM Studio. "Test & save" probes for tool calling (needed for Q&A) and image input (needed for meal photos).
+- **AI model:** chosen per user in Settings → Connections. **Codex CLI** runs `codex exec` on the server with the ChatGPT account signed in to Codex there (no API key; your ChatGPT plan's limits; self-hosted only, turn off with `CODEX_CLI_ENABLED=false`). The other options are Anthropic, OpenAI, or any OpenAI-compatible URL such as Ollama (`http://localhost:11434/v1`) or LM Studio. "Test & save" probes for tool calling (needed for Q&A) and image input (needed for meal photos).
 - **USDA FoodData Central:** `DEMO_KEY` is limited to about 30 requests an hour. Get a free key at https://fdc.nal.usda.gov/api-key-signup/ and set `USDA_FDC_API_KEY`.
 - **Apple Health:** Settings → Connections → Set up Apple Health shows the URL and bearer token to paste into Health Auto Export. Your phone has to reach the server: use a tunnel (cloudflared, Tailscale Funnel) or the Mac's LAN IP.
 

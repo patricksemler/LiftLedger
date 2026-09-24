@@ -26,6 +26,15 @@ const schema = z.object({
     .default("true")
     .transform((v) => v === "true"),
   HEVY_SYNC_CRON: z.string().default("*/30 * * * *"),
+  /** Let users pick "Codex CLI": runs `codex exec` on this server with the
+   * ChatGPT account signed in to Codex here. Self-hosted installs only —
+   * every user who picks it shares that account. */
+  CODEX_CLI_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
+  CODEX_BIN: z.string().default("codex"),
+  CODEX_REASONING_EFFORT: z.enum(["minimal", "low", "medium", "high"]).default("low"),
 });
 
 export type Env = z.infer<typeof schema>;

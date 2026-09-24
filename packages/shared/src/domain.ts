@@ -91,7 +91,12 @@ export type GoalType = z.infer<typeof goalTypeSchema>;
 
 // --- integrations ---
 
-export const aiProviderKindSchema = z.enum(["openai", "anthropic", "openai_compatible"]);
+export const aiProviderKindSchema = z.enum([
+  "openai",
+  "anthropic",
+  "openai_compatible",
+  "codex_cli",
+]);
 export type AiProviderKind = z.infer<typeof aiProviderKindSchema>;
 
 export const integrationProviderSchema = z.enum(["hevy", "ai", "telegram", "apple_health"]);

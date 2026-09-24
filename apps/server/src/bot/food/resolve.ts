@@ -133,7 +133,7 @@ async function pickCandidates(
         "Match each eaten item to the database candidate describing the same food in the same state (cooked vs raw, canned vs dry, liquid vs powder/condensed, brand when given). Prefer the stated brand. Check the kcal/100 g is plausible for that food. Return null when nothing is a real match — a wrong match is worse than none.",
       prompt: listing,
       output: Output.object({ schema: pickSchema }),
-      timeout: 60_000,
+      timeout: 180_000,
     });
     await logAiCall(userId, "food.pick", started, { usage: r.usage });
     for (const pick of r.output.picks) {

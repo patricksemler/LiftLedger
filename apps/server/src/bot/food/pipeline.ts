@@ -233,7 +233,7 @@ export async function editLastMeal(
       "The user is correcting the meal they just logged. Turn their message into edit operations on the listed items (by index). 'It was two servings' → scale_all 2. 'Only half the rice' → scale_item 0.5. 'Remove the milk' → remove_item. 'The bar was 210 calories' → set_item_values with only the stated fields. New foods → add_items with their words.",
     prompt: `Meal: ${meal.title}\n${listing}\n\nCorrection: ${text}`,
     output: Output.object({ schema: editSchema }),
-    timeout: 60_000,
+    timeout: 180_000,
   });
   await logAiCall(ctx.userId, "food.edit", started, { usage: r.usage });
 

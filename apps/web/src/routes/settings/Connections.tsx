@@ -139,6 +139,7 @@ export function HevyConnection({ onConnected }: { onConnected?: () => void }) {
 }
 
 const AI_PRESETS: Record<AiProviderKind, { label: string; model: string; baseUrl?: string }> = {
+  codex_cli: { label: "Codex CLI (ChatGPT plan on this server)", model: "default" },
   anthropic: { label: "Anthropic (Claude)", model: "claude-sonnet-5" },
   openai: { label: "OpenAI", model: "gpt-5" },
   openai_compatible: {
@@ -160,8 +161,8 @@ export function AiConnection() {
     supports_tools?: boolean;
   };
   const [editing, setEditing] = useState(!integration);
-  const [kind, setKind] = useState<AiProviderKind>(config.kind ?? "anthropic");
-  const [model, setModel] = useState(config.model ?? AI_PRESETS.anthropic.model);
+  const [kind, setKind] = useState<AiProviderKind>(config.kind ?? "codex_cli");
+  const [model, setModel] = useState(config.model ?? AI_PRESETS.codex_cli.model);
   const [baseUrl, setBaseUrl] = useState(config.base_url ?? "");
   const [apiKey, setApiKey] = useState("");
 
@@ -182,7 +183,8 @@ export function AiConnection() {
     setEditing(false);
   }
 
-  const needsKey = kind !== "openai_compatible";
+  const needsKey = kind === "anthropic" || kind === "openai";
+  const isCodex = kind === "codex_cli";
 
   return (
     <ConnectionCard
@@ -240,14 +242,23 @@ export function AiConnection() {
             onChange={(e) => setModel(e.target.value)}
             className={`${inputClass} font-mono`}
           />
-          <input
-            type="password"
-            autoComplete="off"
-            placeholder={needsKey ? "API key" : "API key (if your server needs one)"}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className={`${inputClass} font-mono`}
-          />
+          {isCodex ? (
+            <p className="text-xs text-ink-faint">
+              Runs <span className="font-mono">codex exec</span> on the LiftLedger server with the
+              ChatGPT account signed in to Codex there — no API key, uses your ChatGPT plan's
+              limits. Model “default” uses Codex's default. Each reply takes a few seconds longer
+              than an API.
+            </p>
+          ) : (
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder={needsKey ? "API key" : "API key (if your server needs one)"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className={`${inputClass} font-mono`}
+            />
+          )}
           <div className="flex items-center gap-2">
             <button
               type="button"

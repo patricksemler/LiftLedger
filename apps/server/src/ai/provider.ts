@@ -10,6 +10,7 @@ import { z } from "zod";
 import { env } from "../env";
 import { getIntegration } from "../lib/integrations";
 import { getSecret } from "../lib/secrets";
+import { CodexCliModel } from "./codex";
 
 export interface AiConfig {
   kind: AiProviderKind;
@@ -30,6 +31,12 @@ export function buildModel(config: AiConfig, apiKey: string | null): LanguageMod
       return createAnthropic({ apiKey: apiKey ?? "" })(config.model);
     case "openai":
       return createOpenAI({ apiKey: apiKey ?? "" })(config.model);
+    case "codex_cli":
+      if (!env.CODEX_CLI_ENABLED) throw new Error("Codex CLI isn't enabled on this server.");
+      return new CodexCliModel(config.model, {
+        bin: env.CODEX_BIN,
+        reasoningEffort: env.CODEX_REASONING_EFFORT,
+      });
     case "openai_compatible":
       return createOpenAICompatible({
         name: "custom",
@@ -72,49 +79,43 @@ const PIXEL = Buffer.from(
 export async function probeModel(
   model: LanguageModel,
 ): Promise<{ supports_tools: boolean; supports_vision: boolean }> {
-  const timeout = 45_000;
+  // Generous: CLI-backed models (Codex) spend several seconds starting up.
+  const timeout = 120_000;
   await generateText({ model, prompt: "Reply with the single word: ok", timeout });
 
-  let supports_tools = false;
-  try {
-    const r = await generateText({
-      model,
-      timeout,
-      tools: {
-        add: tool({
-          description: "Add two numbers",
-          inputSchema: z.object({ a: z.number(), b: z.number() }),
-          execute: async ({ a, b }) => a + b,
-        }),
+  const toolProbe = generateText({
+    model,
+    timeout,
+    tools: {
+      add: tool({
+        description: "Add two numbers",
+        inputSchema: z.object({ a: z.number(), b: z.number() }),
+        execute: async ({ a, b }) => a + b,
+      }),
+    },
+    toolChoice: "required",
+    prompt: "Use the add tool to add 2 and 3.",
+  })
+    .then((r) => r.steps.some((s) => s.toolCalls.length > 0))
+    .catch(() => false);
+
+  const visionProbe = generateText({
+    model,
+    timeout,
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "What color is this image? One word." },
+          { type: "image", image: PIXEL, mediaType: "image/png" },
+        ],
       },
-      toolChoice: "required",
-      prompt: "Use the add tool to add 2 and 3.",
-    });
-    supports_tools = r.steps.some((s) => s.toolCalls.length > 0);
-  } catch {
-    supports_tools = false;
-  }
+    ],
+  })
+    .then(() => true)
+    .catch(() => false);
 
-  let supports_vision = false;
-  try {
-    await generateText({
-      model,
-      timeout,
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "What color is this image? One word." },
-            { type: "image", image: PIXEL, mediaType: "image/png" },
-          ],
-        },
-      ],
-    });
-    supports_vision = true;
-  } catch {
-    supports_vision = false;
-  }
-
+  const [supports_tools, supports_vision] = await Promise.all([toolProbe, visionProbe]);
   return { supports_tools, supports_vision };
 }
 

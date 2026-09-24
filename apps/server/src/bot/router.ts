@@ -74,7 +74,7 @@ export async function classify(
         "You route messages for a fitness + nutrition tracking bot. Classify the message. A food description with no question ('chipotle bowl', '3 servings of granola', 'had 2 eggs') is log_food. Mentions of food inside a question ('how much protein did I eat yesterday?') are questions.",
       prompt: `${recent}\n${hasPhoto ? "The message has a photo attached.\n" : ""}Message: ${text}`,
       output: Output.object({ schema: intentSchema }),
-      timeout: 30_000,
+      timeout: 120_000,
     });
     await logAiCall(ctx.userId, "router", started, { usage: r.usage });
     return r.output;

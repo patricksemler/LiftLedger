@@ -59,7 +59,10 @@ connections.post("/ai", async (c) => {
 
   let base_url: string | null = null;
   try {
-    if (kind === "openai_compatible") {
+    if (kind === "codex_cli") {
+      if (!env.CODEX_CLI_ENABLED)
+        return c.json({ error: "Codex CLI isn't enabled on this server." }, 400);
+    } else if (kind === "openai_compatible") {
       if (!parsed.data.baseUrl) return c.json({ error: "A base URL is required." }, 400);
       base_url = checkBaseUrl(parsed.data.baseUrl);
     } else if (!apiKey) {
@@ -72,7 +75,7 @@ connections.post("/ai", async (c) => {
     return c.json({ error: (e as Error).message }, 400);
   }
 
-  const key = apiKey || (await getSecret(userId, "ai_api_key"));
+  const key = kind === "codex_cli" ? null : apiKey || (await getSecret(userId, "ai_api_key"));
   const config: AiConfig = { kind, model, base_url };
   let capabilities: { supports_tools: boolean; supports_vision: boolean };
   try {
@@ -82,7 +85,8 @@ connections.post("/ai", async (c) => {
     return c.json({ error: `The model didn't answer: ${message.slice(0, 300)}` }, 400);
   }
 
-  if (apiKey) await putSecret(userId, "ai_api_key", apiKey);
+  if (kind === "codex_cli") await deleteSecret(userId, "ai_api_key");
+  else if (apiKey) await putSecret(userId, "ai_api_key", apiKey);
   else if (kind === "openai_compatible" && !key) await deleteSecret(userId, "ai_api_key");
   await upsertIntegration(userId, "ai", {
     status: "connected",
