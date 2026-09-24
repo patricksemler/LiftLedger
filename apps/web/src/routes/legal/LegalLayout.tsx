@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Link } from "react-router";
+import { useEffect, type ReactNode } from "react";
+import { Link, useLocation } from "react-router";
 
 /** Version of the Terms + Privacy Policy. Recorded in the user's auth
  * metadata at sign-up (`legal_version`); bump it with LAST_UPDATED whenever
@@ -12,6 +12,12 @@ export const CONTACT_URL = "https://github.com/patricksemler/LiftLedger/issues";
 /** Shared frame for the public Terms and Privacy pages. Headings, paragraphs
  * and lists inside `children` are styled here, so the pages stay plain JSX. */
 export function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <div className="min-h-dvh bg-surface-0">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5 md:px-8">
