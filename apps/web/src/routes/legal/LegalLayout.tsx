@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
+import { SiteFooter } from "../../components/SiteFooter";
 
 /** Version of the Terms + Privacy Policy. Recorded in the user's auth
  * metadata at sign-up (`legal_version`); bump it with LAST_UPDATED whenever
@@ -40,25 +41,7 @@ export function LegalLayout({ title, children }: { title: string; children: Reac
         </article>
       </main>
 
-      <LegalFooter />
+      <SiteFooter />
     </div>
-  );
-}
-
-function LegalFooter() {
-  return (
-    <footer className="border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-ink-faint md:px-8">
-        <span className="font-mono tracking-[0.2em]">LIFTLEDGER</span>
-        <nav className="flex gap-4">
-          <Link to="/terms" className="hover:text-ink">
-            Terms
-          </Link>
-          <Link to="/privacy" className="hover:text-ink">
-            Privacy
-          </Link>
-        </nav>
-      </div>
-    </footer>
   );
 }
